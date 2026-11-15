@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JetryLessons · Адмін</title>
+<style>
+  :root {
+    --bg: #08080a; --card: #1c1c1e; --card2: #2a2a2d; --text: #ffffff; --muted: #8e8e93;
+    --blue: #0a84ff; --blue-soft: rgba(10,132,255,.18); --red: #ff453a; --green: #32d74b;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.4 -apple-system, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    padding: 16px 14px 110px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 6px 0 2px; letter-spacing: -.3px; }
+  .sub { color: var(--muted); font-size: 14px; margin-bottom: 16px; }
+  section {
+    background: linear-gradient(180deg, #1c1c1e, #101012);
+    border-radius: 24px; padding: 16px; margin-bottom: 14px;
+  }
+  h2 { font-size: 17px; margin: 0 0 12px; }
+  label { display: block; color: var(--muted); font-size: 13px; margin: 10px 0 4px; }
+  input[type=text], input[type=password], input[type=time], textarea {
+    width: 100%; background: var(--card2); border: 1px solid transparent; color: var(--text);
+    border-radius: 12px; padding: 11px 12px; font: inherit; min-width: 0;
+  }
+  textarea { resize: vertical; min-height: 84px; line-height: 1.4; }
+  input:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+  input[type=time] { color-scheme: dark; }
+  button {
+    font: inherit; color: var(--text); background: var(--card2); border: 0; border-radius: 12px;
+    padding: 10px 14px; cursor: pointer;
+  }
+  button.primary { background: var(--blue); font-weight: 600; }
+  button.ghost { background: transparent; color: var(--blue); padding: 8px 4px; }
+  button.icon { padding: 8px 11px; line-height: 1; }
+  button.danger { color: var(--red); }
+  button:disabled { opacity: .45; cursor: default; }
+  .row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .row .num { width: 26px; color: var(--muted); text-align: center; flex: none; font-variant-numeric: tabular-nums; }
+  .row input[type=text] { flex: 1; }
+  .dash { color: var(--muted); flex: none; }
+  .tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; margin: 0 -4px 6px; }
+  .tabs button { flex: none; background: var(--card2); color: var(--muted); border-radius: 999px; padding: 8px 14px; }
+  .tabs button.on { background: var(--blue-soft); color: var(--blue); font-weight: 600; }
+  .two { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  .hint { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+  .warn { color: #ffb340; font-size: 13px; margin: 6px 0 0; }
+  .emoji-row { display: grid; grid-template-columns: 1fr 70px; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .emoji-row input { text-align: center; }
+  .bar {
+    position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
+    background: rgba(8,8,10,.92); backdrop-filter: blur(12px); border-top: 1px solid #222;
+  }
+  .bar .in { max-width: 640px; margin: 0 auto; display: flex; gap: 10px; align-items: center; }
+  .bar .in button.primary { flex: none; padding: 13px 20px; }
+  #status { flex: 1; font-size: 14px; color: var(--muted); }
+  #status.ok { color: var(--green); }
+  #status.err { color: var(--red); }
+  details summary { cursor: pointer; font-weight: 600; font-size: 17px; list-style: none; }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::after { content: "▾"; float: right; color: var(--muted); }
+  details[open] summary::after { content: "▴"; }
+  ol.steps { padding-left: 20px; color: var(--muted); font-size: 14px; margin: 8px 0 0; }
+  ol.steps li { margin-bottom: 4px; }
+  @media (min-width: 560px) { .two { grid-template-columns: 1fr 1fr; } }
+  @media (prefers-reduced-motion: no-preference) { button { transition: opacity .15s; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>JetryLessons · Адмін</h1>
+  <div class="sub">Змініть розклад і натисніть «Опублікувати». Віджети оновляться в усіх.</div>
+
+  <section>
+    <details id="settings">
+      <summary>Підключення до GitHub</summary>
+      <label for="owner">Логін на GitHub</label>
+      <input type="text" id="owner" autocapitalize="off" autocomplete="off" spellcheck="false">
+      <label for="repo">Репозиторій з розкладом</label>
+      <input type="text" id="repo" autocapitalize="off" autocomplete="off" spellcheck="false">
+      <label for="topic">Тема сповіщень (для миттєвих повідомлень)</label>
+      <input type="text" id="topic" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="jetry-…">
+      <label for="token">Токен доступу</label>
+      <input type="password" id="token" autocomplete="off" placeholder="github_pat_…">
+      <p class="hint">Токен зберігається лише в цьому браузері. Нікому його не передавайте.</p>
+      <div class="row" style="margin-top:10px">
+        <button class="primary" id="saveCfg">Зберегти підключення</button>
+      </div>
+      <ol class="steps">
+        <li>GitHub → ваш аватар → Settings → Developer settings.</li>
+        <li>Personal access tokens → Fine-grained tokens → Generate new token.</li>
+        <li>Repository access: Only select repositories → ваш репозиторій з розкладом.</li>
+        <li>Repository permissions → Contents → Read and write.</li>
+        <li>Generate token, скопіюйте його й вставте сюди.</li>
+      </ol>
+    </details>
+  </section>
+
+  <section>
+    <h2>Оголошення</h2>
+    <input type="text" id="notice" placeholder="Наприклад: Завтра скорочені уроки" maxlength="120">
+    <p class="hint">Показується у віджетах і в застосунку. Залиште порожнім, щоб прибрати.</p>
+  </section>
+
+  <section>
+    <h2>Повідомлення на телефони</h2>
+    <textarea id="msgText" maxlength="300" placeholder="Наприклад: Завтра перший урок о 9:00"></textarea>
+    <div class="row" style="margin-top:10px">
+      <button class="primary" id="sendMsg">Надіслати</button>
+    </div>
+    <p class="hint">Приходить на телефони сповіщенням за кілька секунд. Розклад при цьому не публікується.</p>
+    <div id="msgList" style="margin-top:10px"></div>
+  </section>
+
+  <section>
+    <h2>Уроки по днях</h2>
+    <div class="tabs" id="tabs"></div>
+    <div id="lessons"></div>
+    <button class="ghost" id="addLesson">+ Додати урок</button>
+    <p class="warn" id="lessonWarn"></p>
+    <datalist id="subjects"></datalist>
+  </section>
+
+  <div class="two">
+    <section>
+      <h2>Дзвінки: У школі</h2>
+      <div id="bellsSchool"></div>
+      <button class="ghost" data-add="school_bells">+ Додати дзвінок</button>
+    </section>
+    <section>
+      <h2>Дзвінки: Дистанційно</h2>
+      <div id="bellsRemote"></div>
+      <button class="ghost" data-add="remote_bells">+ Додати дзвінок</button>
+    </section>
+  </div>
+
+  <section>
+    <h2>Емодзі предметів</h2>
+    <div id="emojis"></div>
+    <p class="hint">Предмет без емодзі отримає 📘.</p>
+  </section>
+</div>
+
+<div class="bar">
+  <div class="in">
+    <div id="status">Завантаження…</div>
+    <button class="primary" id="publish" disabled>Опублікувати</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var DAYS = [["mon","Пн"],["tue","Вт"],["wed","Ср"],["thu","Чт"],["fri","Пт"],["sat","Сб"],["sun","Нд"]];
+  var CFG_KEY = "jetry_admin_cfg";
+  var state = null, sha = null, curDay = "mon", dirty = false;
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  function el(tag, props, kids) {
+    var n = document.createElement(tag);
+    Object.keys(props || {}).forEach(function (k) {
+      if (k === "text") n.textContent = props[k];
+      else if (k === "class") n.className = props[k];
+      else if (k.indexOf("on") === 0) n.addEventListener(k.slice(2), props[k]);
+      else n.setAttribute(k, props[k]);
+    });
+    (kids || []).forEach(function (c) { n.appendChild(c); });
+    return n;
+  }
+
+  function cfg() {
+    var c = {};
+    try { c = JSON.parse(localStorage.getItem(CFG_KEY)) || {}; } catch (e) {}
+    return {
+      owner: c.owner || "jetrysq-hue",
+      repo: c.repo || "jetry-schedule",
+      token: c.token || "",
+      topic: c.topic || ""
+    };
+  }
+
+  function setStatus(text, kind) {
+    var s = $("status");
+    s.textContent = text;
+    s.className = kind || "";
+  }
+
+  function markDirty() {
+    dirty = true;
+    $("publish").disabled = false;
+    setStatus("Є незбережені зміни", "");
+  }
+
+  window.addEventListener("beforeunload", function (e) {
+    if (dirty) { e.preventDefault(); e.returnValue = ""; }
+  });
+
+  // ---------- GitHub ----------
+  function apiUrl() {
+    var c = cfg();
+    return "https://api.github.com/repos/" + encodeURIComponent(c.owner) + "/" +
+      encodeURIComponent(c.repo) + "/contents/schedule.json";
+  }
+  function headers() {
+    return { "Accept": "application/vnd.github+json", "Authorization": "Bearer " + cfg().token };
+  }
+  function b64decode(b64) {
+    var bin = atob(b64.replace(/\s/g, ""));
+    var bytes = Uint8Array.from(bin, function (ch) { return ch.charCodeAt(0); });
+    return new TextDecoder("utf-8").decode(bytes);
+  }
+  function b64encode(text) {
+    var bytes = new TextEncoder().encode(text), bin = "";
+    bytes.forEach(function (b) { bin += String.fromCharCode(b); });
+    return btoa(bin);
+  }
+  function explain(status) {
+    if (status === 401) return "Токен не підійшов. Створіть новий і вставте в налаштуваннях.";
+    if (status === 403) return "Немає прав на запис. У токена має бути Contents: Read and write.";
+    if (status === 404) return "Файл schedule.json не знайдено. Перевірте логін і назву репозиторію.";
+    if (status === 409 || status === 422) return "Файл змінився на GitHub. Перезавантажте сторінку й спробуйте ще раз.";
+    return "Помилка GitHub (" + status + ").";
+  }
+
+  function normalize(d) {
+    d = d || {};
+    var out = {
+      notice: typeof d.notice === "string" ? d.notice : "",
+      school_bells: Array.isArray(d.school_bells) ? d.school_bells : [],
+      remote_bells: Array.isArray(d.remote_bells) ? d.remote_bells : [],
+      week: {},
+      emoji: (d.emoji && typeof d.emoji === "object") ? d.emoji : {},
+      messages: Array.isArray(d.messages) ? d.messages.filter(function (m) { return m && m.text && m.id; }) : []
+    };
+    DAYS.forEach(function (p) {
+      var a = d.week && Array.isArray(d.week[p[0]]) ? d.week[p[0]] : [];
+      out.week[p[0]] = a.map(String);
+    });
+    return out;
+  }
+
+  function load() {
+    var c = cfg();
+    if (!c.token) {
+      $("settings").open = true;
+      state = normalize({});
+      renderAll();
+      setStatus("Вставте токен у підключенні", "err");
+      return;
+    }
+    setStatus("Завантаження…", "");
+    fetch(apiUrl() + "?ref=main&t=" + Date.now(), { headers: headers(), cache: "no-store" })
+      .then(function (r) {
+        if (!r.ok) throw { status: r.status };
+        return r.json();
+      })
+      .then(function (j) {
+        sha = j.sha;
+        state = normalize(JSON.parse(b64decode(j.content)));
+        dirty = false;
+        $("publish").disabled = true;
+        renderAll();
+        setStatus("Розклад завантажено", "ok");
+      })
+      .catch(function (e) {
+        state = normalize({});
+        renderAll();
+        if (e && e.status) setStatus(explain(e.status), "err");
+        else setStatus("Не вдалося завантажити. Перевірте інтернет.", "err");
+        $("settings").open = true;
+      });
+  }
+
+  // ---------- Перевірка і збірка файлу ----------
+  function toMin(t) {
+    var m = /^(\d{1,2}):(\d{2})$/.exec(t || "");
+    return m ? (+m[1]) * 60 + (+m[2]) : null;
+  }
+
+  function validate() {
+    var names = [["school_bells", "Дзвінки «У школі»"], ["remote_bells", "Дзвінки «Дистанційно»"]];
+    for (var i = 0; i < names.length; i++) {
+      var list = state[names[i][0]];
+      if (!list.length) return names[i][1] + ": додайте хоча б один дзвінок.";
+      var prevEnd = -1;
+      for (var j = 0; j < list.length; j++) {
+        var s = toMin(list[j][0]), e = toMin(list[j][1]);
+        if (s === null || e === null) return names[i][1] + ", урок " + (j + 1) + ": вкажіть час.";
+        if (e <= s) return names[i][1] + ", урок " + (j + 1) + ": кінець має бути пізніше за початок.";
+        if (s < prevEnd) return names[i][1] + ", урок " + (j + 1) + ": починається раніше, ніж закінчився попередній.";
+        prevEnd = e;
+      }
+    }
+    var any = DAYS.some(function (p) { return state.week[p[0]].some(function (x) { return x.trim(); }); });
+    if (!any) return "Додайте хоча б один урок.";
+    return null;
+  }
+
+  function q(s) { return JSON.stringify(s); }
+
+  function serialize() {
+    function bells(name, list) {
+      return '  "' + name + '": [\n' + list.map(function (b) {
+        return "    [" + q(b[0]) + ", " + q(b[1]) + "]";
+      }).join(",\n") + "\n  ]";
+    }
+    var week = DAYS.map(function (p) {
+      var items = state.week[p[0]].map(function (s) { return s.trim(); }).filter(Boolean);
+      return items.length ? '    "' + p[0] + '": [' + items.map(q).join(", ") + "]" : null;
+    }).filter(Boolean).join(",\n");
+    var used = {};
+    DAYS.forEach(function (p) { state.week[p[0]].forEach(function (s) { used[s.trim()] = 1; }); });
+    var emo = Object.keys(state.emoji).filter(function (k) { return used[k] && state.emoji[k]; })
+      .map(function (k) { return "    " + q(k) + ": " + q(state.emoji[k]); }).join(",\n");
+    var msgs = state.messages.slice(-20).map(function (m) {
+      return "    " + JSON.stringify({ id: m.id, text: m.text, time: m.time || "" });
+    }).join(",\n");
+    return "{\n  \"notice\": " + q(state.notice.trim()) + ",\n" +
+      '  "messages": [' + (msgs ? "\n" + msgs + "\n  " : "") + "],\n" +
+      bells("school_bells", state.school_bells) + ",\n" +
+      bells("remote_bells", state.remote_bells) + ",\n" +
+      '  "week": {\n' + week + "\n  },\n" +
+      '  "emoji": {\n' + emo + "\n  }\n}\n";
+  }
+
+  function publish(okText) {
+    var problem = validate();
+    if (problem) { setStatus(problem, "err"); return; }
+    if (!cfg().token) { $("settings").open = true; setStatus("Спочатку вставте токен", "err"); return; }
+    var body = {
+      message: "Оновлення розкладу",
+      content: b64encode(serialize()),
+      sha: sha,
+      branch: "main"
+    };
+    $("publish").disabled = true;
+    setStatus("Публікація…", "");
+    fetch(apiUrl(), {
+      method: "PUT",
+      headers: Object.assign({ "Content-Type": "application/json" }, headers()),
+      body: JSON.stringify(body)
+    })
+      .then(function (r) {
+        if (!r.ok) throw { status: r.status };
+        return r.json();
+      })
+      .then(function (j) {
+        sha = j.content.sha;
+        dirty = false;
+        if (cfg().topic) { ntfy({ type: "schedule" }).catch(function () {}); }
+        setStatus(okText || "Опубліковано. У застосунку зміни з'являться за кілька хвилин.", "ok");
+      })
+      .catch(function (e) {
+        $("publish").disabled = false;
+        setStatus(e && e.status ? explain(e.status) : "Не вдалося опублікувати. Перевірте інтернет.", "err");
+      });
+  }
+
+  // ---------- Інтерфейс ----------
+  function renderTabs() {
+    var box = $("tabs");
+    box.innerHTML = "";
+    DAYS.forEach(function (p) {
+      var count = state.week[p[0]].length;
+      var b = el("button", {
+        text: p[1] + (count ? "" : " ·"),
+        class: p[0] === curDay ? "on" : "",
+        onclick: function () { curDay = p[0]; renderTabs(); renderLessons(); }
+      });
+      box.appendChild(b);
+    });
+  }
+
+  function renderLessons() {
+    var box = $("lessons");
+    box.innerHTML = "";
+    var list = state.week[curDay];
+    if (!list.length) box.appendChild(el("p", { class: "hint", text: "У цей день уроків немає. Додайте перший урок або залиште вихідний." }));
+    list.forEach(function (name, i) {
+      var input = el("input", { type: "text", list: "subjects", value: name, placeholder: "Назва предмета" });
+      input.addEventListener("input", function () {
+        list[i] = input.value; markDirty(); renderEmojis(); renderSubjects();
+      });
+      var row = el("div", { class: "row" }, [
+        el("span", { class: "num", text: String(i + 1) }),
+        input,
+        el("button", { class: "icon", text: "↑", "aria-label": "Вище", onclick: function () { move(list, i, -1); } }),
+        el("button", { class: "icon", text: "↓", "aria-label": "Нижче", onclick: function () { move(list, i, 1); } }),
+        el("button", { class: "icon danger", text: "✕", "aria-label": "Видалити", onclick: function () {
+          list.splice(i, 1); markDirty(); renderAll();
+        } })
+      ]);
+      box.appendChild(row);
+    });
+    var maxBells = Math.min(state.school_bells.length, state.remote_bells.length);
+    var cnt = list.filter(function (x) { return x.trim(); }).length;
+    $("lessonWarn").textContent = cnt > maxBells
+      ? "Уроків більше, ніж дзвінків (" + maxBells + "). Зайві уроки не показуватимуться в одному з режимів."
+      : "";
+  }
+
+  function move(list, i, d) {
+    var j = i + d;
+    if (j < 0 || j >= list.length) return;
+    var t = list[i]; list[i] = list[j]; list[j] = t;
+    markDirty(); renderLessons();
+  }
+
+  function renderBells(boxId, key) {
+    var box = $(boxId);
+    box.innerHTML = "";
+    state[key].forEach(function (b, i) {
+      var s = el("input", { type: "time", value: b[0] });
+      var e = el("input", { type: "time", value: b[1] });
+      s.addEventListener("input", function () { b[0] = s.value; markDirty(); });
+      e.addEventListener("input", function () { b[1] = e.value; markDirty(); });
+      box.appendChild(el("div", { class: "row" }, [
+        el("span", { class: "num", text: String(i + 1) }), s,
+        el("span", { class: "dash", text: "–" }), e,
+        el("button", { class: "icon danger", text: "✕", "aria-label": "Видалити", onclick: function () {
+          state[key].splice(i, 1); markDirty(); renderAll();
+        } })
+      ]));
+    });
+  }
+
+  function allSubjects() {
+    var set = {};
+    DAYS.forEach(function (p) { state.week[p[0]].forEach(function (s) { s = s.trim(); if (s) set[s] = 1; }); });
+    return Object.keys(set);
+  }
+
+  function renderSubjects() {
+    var dl = $("subjects");
+    dl.innerHTML = "";
+    allSubjects().forEach(function (s) { dl.appendChild(el("option", { value: s })); });
+  }
+
+  function renderEmojis() {
+    var box = $("emojis");
+    var focused = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.emoji;
+    if (focused) return;
+    box.innerHTML = "";
+    allSubjects().forEach(function (s) {
+      var input = el("input", { type: "text", value: state.emoji[s] || "", placeholder: "📘", maxlength: "8", "data-emoji": s });
+      input.addEventListener("input", function () { state.emoji[s] = input.value.trim(); markDirty(); });
+      box.appendChild(el("div", { class: "emoji-row" }, [el("span", { text: s }), input]));
+    });
+  }
+
+  function renderAll() {
+    $("notice").value = state.notice;
+    renderTabs(); renderLessons();
+    renderBells("bellsSchool", "school_bells");
+    renderBells("bellsRemote", "remote_bells");
+    renderSubjects(); renderEmojis(); renderMessages();
+  }
+
+  // ---------- Повідомлення (миттєво через ntfy) ----------
+  var SENT_KEY = "jetry_admin_sent";
+
+  function nowLabel() {
+    var d = new Date();
+    function p(x) { return ("0" + x).slice(-2); }
+    return p(d.getDate()) + "." + p(d.getMonth() + 1) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+
+  function ntfy(obj) {
+    return fetch("https://ntfy.sh/" + encodeURIComponent(cfg().topic), {
+      method: "POST",
+      body: JSON.stringify(obj)
+    }).then(function (r) {
+      if (!r.ok) throw new Error("ntfy " + r.status);
+    });
+  }
+
+  function sentList() {
+    try { return JSON.parse(localStorage.getItem(SENT_KEY)) || []; } catch (e) { return []; }
+  }
+
+  function renderMessages() {
+    var box = $("msgList");
+    box.innerHTML = "";
+    sentList().slice(-5).reverse().forEach(function (m) {
+      box.appendChild(el("div", { class: "row" }, [
+        el("span", { class: "dash", text: m.time || "" }),
+        el("span", { text: m.text, style: "flex:1" })
+      ]));
+    });
+  }
+
+  function sendMessage() {
+    var t = $("msgText").value.trim();
+    if (!t) { setStatus("Напишіть текст повідомлення", "err"); return; }
+    if (!cfg().topic) {
+      $("settings").open = true;
+      setStatus("Вкажіть тему сповіщень у підключенні", "err");
+      return;
+    }
+    var m = { type: "message", id: Date.now(), text: t, time: nowLabel() };
+    $("sendMsg").disabled = true;
+    setStatus("Надсилання…", "");
+    ntfy(m).then(function () {
+      var list = sentList(); list.push({ text: m.text, time: m.time });
+      localStorage.setItem(SENT_KEY, JSON.stringify(list.slice(-20)));
+      $("msgText").value = "";
+      renderMessages();
+      setStatus("Повідомлення надіслано. Воно вже летить на телефони.", "ok");
+    }).catch(function () {
+      setStatus("Не вдалося надіслати. Перевірте інтернет і тему сповіщень.", "err");
+    }).then(function () { $("sendMsg").disabled = false; });
+  }
+
+  // ---------- Події ----------
+  $("addLesson").addEventListener("click", function () {
+    state.week[curDay].push(""); markDirty(); renderLessons();
+    var inputs = document.querySelectorAll("#lessons input[type=text]");
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  });
+  document.querySelectorAll("[data-add]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var key = b.getAttribute("data-add"), list = state[key];
+      var last = list.length ? list[list.length - 1][1] : "08:30";
+      var m = toMin(last) === null ? 510 : toMin(last) + 5;
+      function fmt(x) { x = Math.min(x, 1439); return ("0" + Math.floor(x / 60)).slice(-2) + ":" + ("0" + (x % 60)).slice(-2); }
+      list.push([fmt(m), fmt(m + 30)]);
+      markDirty(); renderAll();
+    });
+  });
+  $("notice").addEventListener("input", function () { state.notice = $("notice").value; markDirty(); });
+  $("publish").addEventListener("click", function () { publish(); });
+  $("sendMsg").addEventListener("click", sendMessage);
+  $("saveCfg").addEventListener("click", function () {
+    localStorage.setItem(CFG_KEY, JSON.stringify({
+      owner: $("owner").value.trim(), repo: $("repo").value.trim(), token: $("token").value.trim(), topic: $("topic").value.trim()
+    }));
+    $("settings").open = false;
+    load();
+  });
+
+  var c = cfg();
+  $("owner").value = c.owner; $("repo").value = c.repo; $("token").value = c.token; $("topic").value = c.topic;
+  load();
+})();
+</script>
+</body>
+</html>
